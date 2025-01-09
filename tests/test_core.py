@@ -1,17 +1,18 @@
 """Tests standard tap features using the built-in SDK tests library."""
+from typing import Any
 
 import datetime
+import os
 
 from singer_sdk.testing import get_tap_test_class
 
 from tap_paylocity.tap import TapPaylocity
 
-SAMPLE_CONFIG = {
+SAMPLE_CONFIG: dict[str, Any] = {
     "start_date": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d"),
-    # TODO: Initialize minimal tap config
-    "client_id": "",
-    "client_secret": "",
-    "company_id": ""
+    "client_id": os.getenv("TAP_PAYLOCITY_CLIENT_ID"),
+    "client_secret": os.getenv("TAP_PAYLOCITY_CLIENT_SECRET"),
+    "company_id": os.getenv("TAP_PAYLOCITY_COMPANY_ID"),
 }
 
 

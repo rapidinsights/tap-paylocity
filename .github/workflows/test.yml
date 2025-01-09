@@ -47,5 +47,9 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - run: pipx install tox
     - name: Run Tox
+      env:
+        TAP_PAYLOCITY_CLIENT_ID: ${{ secrets.TAP_PAYLOCITY_CLIENT_ID }}
+        TAP_PAYLOCITY_CLIENT_SECRET: ${{ secrets.TAP_PAYLOCITY_CLIENT_SECRET }}
+        TAP_PAYLOCITY_COMPANY_ID: ${{ secrets.TAP_PAYLOCITY_COMPANY_ID }}
       run: |
         tox -e $(echo py${{ matrix.python-version }} | tr -d .)
