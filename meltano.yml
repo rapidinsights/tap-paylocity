@@ -1,0 +1,52 @@
+version: 1
+send_anonymous_usage_stats: true
+project_id: tap-paylocity
+default_environment: test
+environments:
+- name: test
+plugins:
+  extractors:
+  - name: tap-paylocity
+    namespace: tap_paylocity
+    pip_url: -e .
+    capabilities:
+    - state
+    - catalog
+    - discover
+    - about
+    - stream-maps
+
+    # TODO: Declare settings and their types here:
+    settings_group_validation:
+    - [company_id, client_id, client_secret]
+
+    # TODO: Declare default configuration values here:
+    settings:
+    - name: company_id
+      label: Company ID
+      description: The company ID to request
+
+    - name: client_id
+      label: Client ID
+      description: The client ID to use for authentication
+      sensitive: true
+
+    - name: client_secret
+      label: Client Secret
+      description: The client secret to use for authentication
+      sensitive: true
+
+    - name: start_date
+      kind: date_iso8601
+      label: Start Date
+      description: Initial date to start extracting data from
+
+    # TODO: Declare required settings here:
+    config:
+      start_date: '2010-01-01T00:00:00Z'
+
+      company_id: ''
+  loaders:
+  - name: target-jsonl
+    variant: andyh1203
+    pip_url: target-jsonl
