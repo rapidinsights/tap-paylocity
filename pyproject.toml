@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "meltanolabs-tap-paylocity"
+name = "tap-paylocity"
 version = "0.0.1"
 description = "Singer tap for Paylocity, built with the Meltano Singer SDK."
 readme = "README.md"
