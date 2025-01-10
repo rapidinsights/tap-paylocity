@@ -46,7 +46,7 @@ plugins:
       start_date: '2025-01-01T00:00:00'
       nextgen_client_id: $TAP_PAYLOCITY_NEXTGEN_CLIENT_ID
       nextgen_client_secret: $TAP_PAYLOCITY_NEXTGEN_CLIENT_SECRET
-      company_id: '149471'
+      company_id: ''
     select:
     # - '*.*'
       - punch_details.*
