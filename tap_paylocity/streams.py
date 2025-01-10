@@ -167,7 +167,7 @@ class PunchDetails(PaylocityNextGenStream):
 
     name = "punch_details"
     path = "/apiHub/time/v1/companies/149471/employees/{employeeId}/punchDetails"
-    primary_keys: t.ClassVar[list[str]] = ["employeeId", "punchID"]
+    primary_keys: t.ClassVar[list[str]] = ["employeeId", "relativeEnd"]
     replication_key = "relativeEnd"
     ignore_parent_replication_keys = True
 
