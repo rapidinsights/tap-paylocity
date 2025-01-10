@@ -3,68 +3,19 @@
 from __future__ import annotations
 
 import typing as t
+import requests
+
+from datetime import datetime
+from datetime import timedelta
 from importlib import resources
 
 from singer_sdk import typing as th  # JSON Schema typing helpers
 from singer_sdk.pagination import BasePageNumberPaginator
 
-from tap_paylocity.client import PaylocityStream
+from tap_paylocity.client import PaylocityStream, PaylocityNextGenStream
 
 # TODO: Delete this is if not using json files for schema definition
 SCHEMAS_DIR = resources.files(__package__) / "schemas"
-# TODO: - Override `UsersStream` and `GroupsStream` with your own stream definition.
-#       - Copy-paste as many times as needed to create multiple stream types.
-
-
-class UsersStream(PaylocityStream):
-    """Define custom stream."""
-
-    name = "users"
-    path = "/users"
-    primary_keys: t.ClassVar[list[str]] = ["id"]
-    replication_key = None
-    # Optionally, you may also use `schema_filepath` in place of `schema`:
-    # schema_filepath = SCHEMAS_DIR / "users.json"  # noqa: ERA001
-    schema = th.PropertiesList(
-        th.Property("name", th.StringType),
-        th.Property(
-            "id",
-            th.StringType,
-            description="The user's system ID",
-        ),
-        th.Property(
-            "age",
-            th.IntegerType,
-            description="The user's age in years",
-        ),
-        th.Property(
-            "email",
-            th.StringType,
-            description="The user's email address",
-        ),
-        th.Property("street", th.StringType),
-        th.Property("city", th.StringType),
-        th.Property(
-            "state",
-            th.StringType,
-            description="State name in ISO 3166-2 format",
-        ),
-        th.Property("zip", th.StringType),
-    ).to_dict()
-
-
-class GroupsStream(PaylocityStream):
-    """Define custom stream."""
-
-    name = "groups"
-    path = "/groups"
-    primary_keys: t.ClassVar[list[str]] = ["id"]
-    replication_key = "modified"
-    schema = th.PropertiesList(
-        th.Property("name", th.StringType),
-        th.Property("id", th.StringType),
-        th.Property("modified", th.DateTimeType),
-    ).to_dict()
 
 
 class EmployeesStream(PaylocityStream):
@@ -125,6 +76,7 @@ class EmployeesStream(PaylocityStream):
         """
         return {
             "employeeId": record["employeeId"],
+            "statusCode": record["statusCode"],
         }
 
 
@@ -208,3 +160,70 @@ class EmployeeDetailsStream(PaylocityStream):
             new_row["hireDate"] = new_row.get("status", {}).get("hireDate")
 
         return new_row
+
+
+class PunchDetails(PaylocityNextGenStream):
+    """Stream for getting an Employee's PunchDetails."""
+
+    name = "punch_details"
+    path = "/apiHub/time/v1/companies/149471/employees/{employeeId}/punchDetails"
+    primary_keys: t.ClassVar[list[str]] = ["employeeId", "punchID"]
+    replication_key = "relativeEnd"
+    ignore_parent_replication_keys = True
+
+    parent_stream_type = EmployeesStream
+
+    schema = th.PropertiesList(
+        th.Property("employeeId", th.StringType, description="Unique identifier for the employee."),
+        th.Property("badgeNumber", th.IntegerType, description="Badge number of the employee."),
+        th.Property("relativeStart", th.DateTimeType, description="Start time for the worked shift."),
+        th.Property("relativeEnd", th.DateTimeType, description="End time for the worked shift."),
+        th.Property("punchID", th.StringType, description="Unique identifier for the punch."),
+        th.Property("origin", th.StringType, description="Origin of the punch."),
+        th.Property("date", th.DateType, description="Date of the punch."),
+        th.Property("punchType", th.StringType, description="Type of punch (e.g., work, lunch)."),
+        th.Property("relativeOriginalStart", th.DateTimeType, description="Original start time for the punch."),
+        th.Property("relativeOriginalEnd", th.DateTimeType, description="Original end time for the punch."),
+        th.Property("durationSeconds", th.IntegerType, description="Duration of the punch in seconds."),
+        th.Property("earnings", th.NumberType, description="Earnings for the punch."),
+    ).to_dict()
+
+    def get_url_params(
+        self,
+        context: dict | None,
+        next_page_token: str | None,
+    ) -> dict[str, t.Any]:
+        """Get URL query parameters."""
+        params = super().get_url_params(context, next_page_token)
+
+        # Skip making the request if the status code is not "A"
+        if context["statusCode"] != "A":
+            # work around to make sure the request is a success but no data is returned
+            params["testFlag"] = True
+
+        params["companyId"] = self.config.get("company_id")
+        params["employeeId"] = context["employeeId"]
+
+        # Check for existing state
+        relative_start = self.get_starting_timestamp(context)
+        relative_end = datetime.now()
+
+        # Convert to ISO format for the API
+        params["relativeStart"] = relative_start.strftime("%Y-%m-%dT%H:%M:%S")
+        params["relativeEnd"] = relative_end.strftime("%Y-%m-%dT%H:%M:%S")
+
+        return params
+
+    def parse_response(self, response) -> t.Iterable[dict]:
+        """Parse API responses into individual segment records."""
+        records = response.json()
+        for record in records:
+            if "relativeEnd" not in record:
+                # This field must exist for tracking state through the replication key (relativeEnd)
+                record["relativeEnd"] = record["segments"][0]["date"]
+            for segment in record.get("segments", []):
+                # Merge top-level keys with segment keys
+                yield {
+                    **{k: v for k, v in record.items() if k != "segments"},  # Exclude "segments"
+                    **segment,  # Include individual segment details
+                }
