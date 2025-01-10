@@ -254,3 +254,13 @@ class PaylocityNextGenStream(RESTStream):
         """
         # TODO: Delete this method if not needed.
         return row
+
+    def validate_response(self, response):
+        """Catch error status codes"""
+        # workaround until filtering in employees request is available
+        if response.status_code == 404:
+            msg = (
+                f"{response.status_code} Tolerated Status Code"
+            )
+            self.logger.info(msg)
+            return

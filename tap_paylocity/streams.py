@@ -196,11 +196,6 @@ class PunchDetails(PaylocityNextGenStream):
         """Get URL query parameters."""
         params = super().get_url_params(context, next_page_token)
 
-        # Skip making the request if the status code is not "A"
-        if context["statusCode"] != "A":
-            # work around to make sure the request is a success but no data is returned
-            params["testFlag"] = True
-
         params["companyId"] = self.config.get("company_id")
         params["employeeId"] = context["employeeId"]
 
@@ -216,6 +211,9 @@ class PunchDetails(PaylocityNextGenStream):
 
     def parse_response(self, response) -> t.Iterable[dict]:
         """Parse API responses into individual segment records."""
+        if not response:
+            return
+
         records = response.json()
         for record in records:
             if "relativeEnd" not in record:
@@ -227,3 +225,4 @@ class PunchDetails(PaylocityNextGenStream):
                     **{k: v for k, v in record.items() if k != "segments"},  # Exclude "segments"
                     **segment,  # Include individual segment details
                 }
+
