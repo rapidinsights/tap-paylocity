@@ -52,13 +52,6 @@ class TapPaylocity(Tap):
             description="The earliest record date to sync",
         ),
         th.Property(
-            "api_url",
-            th.StringType,
-            title="API URL",
-            default="https://api.mysample.com",
-            description="The url for the API service",
-        ),
-        th.Property(
             "user_agent",
             th.StringType,
             description=(
@@ -75,10 +68,9 @@ class TapPaylocity(Tap):
             A list of discovered streams.
         """
         return [
-            # streams.GroupsStream(self),
-            # streams.UsersStream(self),
             streams.EmployeesStream(self),
             streams.EmployeeDetailsStream(self),
+            streams.PunchDetails(self),
         ]
 
 
