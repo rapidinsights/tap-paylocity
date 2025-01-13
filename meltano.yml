@@ -43,13 +43,14 @@ plugins:
 
     # TODO: Declare required settings here:
     config:
-      start_date: '2025-01-01T00:00:00'
+      start_date: '2024-12-01'
+      end_date: '2024-12-31'
       nextgen_client_id: $TAP_PAYLOCITY_NEXTGEN_CLIENT_ID
       nextgen_client_secret: $TAP_PAYLOCITY_NEXTGEN_CLIENT_SECRET
       company_id: '149471'
     select:
     # - '*.*'
-    - punch_details.*
+    - 'punch_details.*'
   loaders:
   - name: target-jsonl
     variant: andyh1203

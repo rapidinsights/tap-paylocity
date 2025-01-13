@@ -80,7 +80,6 @@ class EmployeesStream(PaylocityStream):
         }
 
 
-
 class EmployeeDetailsStream(PaylocityStream):
     """Stream for retrieving employee details from Paylocity."""
 
@@ -196,16 +195,17 @@ class PunchDetails(PaylocityNextGenStream):
         """Get URL query parameters."""
         params = super().get_url_params(context, next_page_token)
 
+        # Add fixed parameters
         params["companyId"] = self.config.get("company_id")
         params["employeeId"] = context["employeeId"]
 
-        # Check for existing state
+        # Handle date ranges dynamically
         relative_start = self.get_starting_timestamp(context)
-        relative_end = datetime.now()
+        relative_end = self.config.get('end_date') or datetime.now().isoformat()
 
         # Convert to ISO format for the API
-        params["relativeStart"] = relative_start.strftime("%Y-%m-%dT%H:%M:%S")
-        params["relativeEnd"] = relative_end.strftime("%Y-%m-%dT%H:%M:%S")
+        params["relativeStart"] = relative_start.isoformat()
+        params["relativeEnd"] = relative_end
 
         return params
 
@@ -225,4 +225,5 @@ class PunchDetails(PaylocityNextGenStream):
                     **{k: v for k, v in record.items() if k != "segments"},  # Exclude "segments"
                     **segment,  # Include individual segment details
                 }
+
 
