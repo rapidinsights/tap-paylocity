@@ -166,8 +166,8 @@ class PunchDetails(PaylocityNextGenStream):
 
     name = "punch_details"
     path = "/apiHub/time/v1/companies/149471/employees/{employeeId}/punchDetails"
-    primary_keys: t.ClassVar[list[str]] = ["employeeId", "relativeEnd"]
-    replication_key = "relativeEnd"
+    primary_keys: t.ClassVar[list[str]] = ["employeeId", "relativeStart", "punchID"]
+    # replication_key = "relativeEnd"
     ignore_parent_replication_keys = True
 
     parent_stream_type = EmployeesStream
@@ -200,11 +200,11 @@ class PunchDetails(PaylocityNextGenStream):
         params["employeeId"] = context["employeeId"]
 
         # Handle date ranges dynamically
-        relative_start = self.get_starting_timestamp(context)
-        relative_end = self.config.get('end_date') or datetime.now().isoformat()
+        relative_start = self.config.get("start_date")
+        relative_end = self.config.get("end_date") or datetime.now().isoformat()
 
         # Convert to ISO format for the API
-        params["relativeStart"] = relative_start.isoformat()
+        params["relativeStart"] = relative_start
         params["relativeEnd"] = relative_end
 
         return params
