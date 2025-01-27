@@ -40,7 +40,7 @@ jobs:
           file_glob: true
 
       - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@v1.12.3
+        uses: pypa/gh-action-pypi-publish@v1.12.4
         with:
           trusted-publishers: pypi-publisher/rapidinsights/tap-paylocity
 
