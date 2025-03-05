@@ -167,7 +167,7 @@ class PunchDetails(PaylocityNextGenStream):
     name = "punch_details"
     path = "/apiHub/time/v1/companies/149471/employees/{employeeId}/punchDetails"
     primary_keys: t.ClassVar[list[str]] = ["employeeId", "relativeEnd"]
-    # replication_key = "relativeEnd"
+    replication_key = "relativeEnd"
     ignore_parent_replication_keys = True
 
     parent_stream_type = EmployeesStream
@@ -199,15 +199,13 @@ class PunchDetails(PaylocityNextGenStream):
         params["companyId"] = self.config.get("company_id")
         params["employeeId"] = context["employeeId"]
 
-        # Handle date ranges dynamically
-        relative_start = self.config.get("start_date")
-        relative_end = self.config.get("end_date") or datetime.now().isoformat()
-
-        # Convert to ISO format for the API
-        params["relativeStart"] = relative_start
-        params["relativeEnd"] = relative_end
+        last_state = self.get_starting_timestamp(context)  # Typically provided by the base class.
+        params["relativeStart"] = last_state or self.config.get("start_date")
+        # Set the relativeEnd to now (or a configured end_date) to ensure you get new data.
+        params["relativeEnd"] = self.config.get("end_date") or datetime.now().isoformat()
 
         return params
+
 
     def parse_response(self, response) -> t.Iterable[dict]:
         """Parse API responses into individual segment records."""
